@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 
@@ -22,16 +23,33 @@ const (
 var (
 	listenAddress = flag.String("web.listen-address", ":9106", "Address to listen on for web interface and telemetry.")
 	metricsPath   = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
-	burrowURL     = flag.String("burrow-address", "http://localhost:8000", "Address to contact burrow.")
+	cfgFile       = flag.String("config", "kafka_lag_exporter.yml", "Config file location.")
 )
 
 func main() {
+	var err error
+	defer func() {
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%+v", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}()
+
 	flag.Parse()
 
-	exporter := NewExporter(*burrowURL)
-	prometheus.MustRegister(exporter)
+	cfgFile, err := os.Open(*cfgFile)
+	if err != nil {
+		return
+	}
 
-	exporter.listClusters()
+	cfg, err := readConfig(cfgFile)
+	if err != nil {
+		return
+	}
+
+	exporter := NewExporter(cfg)
+	prometheus.MustRegister(exporter)
 
 	http.Handle(*metricsPath, prometheus.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -48,6 +66,7 @@ func main() {
 
 // Exporter represents Burrow metrics to prometheus.
 type Exporter struct {
+	*config
 	url string
 
 	sync.Mutex
@@ -58,9 +77,11 @@ type Exporter struct {
 }
 
 // NewExporter returns an initialized exporter
-func NewExporter(url string) *Exporter {
+func NewExporter(cfg *config) *Exporter {
+	url := "http://localhost:8000"
 	return &Exporter{
-		url: url,
+		config: cfg,
+		url:    url,
 		toffset: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name:      "topic_offset_messages",
@@ -142,7 +163,7 @@ func (e *Exporter) listClusters() ([]string, error) {
 		Clusters []string
 	}{}
 
-	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka", *burrowURL))
+	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka", e.url))
 	if err != nil {
 		errors.Wrap(err, "request failed")
 	}
@@ -169,7 +190,7 @@ func (e *Exporter) listClusterTopics(c string) ([]string, error) {
 		Topics  []string
 	}{}
 
-	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/topic", *burrowURL, c))
+	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/topic", e.url, c))
 	if err != nil {
 		errors.Wrap(err, "request failed")
 	}
@@ -196,7 +217,7 @@ func (e *Exporter) listConsumerGroups(c string) ([]string, error) {
 		Consumers []string
 	}{}
 
-	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/consumer", *burrowURL, c))
+	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/consumer", e.url, c))
 	if err != nil {
 		errors.Wrap(err, "request failed")
 	}
@@ -223,7 +244,7 @@ func (e *Exporter) listConsumerGroupTopics(c, cg string) ([]string, error) {
 		Topics  []string
 	}{}
 
-	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/consumer/%s/topic", *burrowURL, c, cg))
+	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/consumer/%s/topic", e.url, c, cg))
 	if err != nil {
 		errors.Wrap(err, "request failed")
 	}
@@ -250,7 +271,7 @@ func (e *Exporter) collectTopicOffsets(c, t string) error {
 		Offsets []int
 	}{}
 
-	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/topic/%s", *burrowURL, c, t))
+	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/topic/%s", e.url, c, t))
 	if err != nil {
 		errors.Wrap(err, "request failed")
 	}
@@ -281,7 +302,7 @@ func (e *Exporter) collectConsumerGroupTopicOffsets(c, cg, t string) error {
 		Offsets []int
 	}{}
 
-	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/consumer/%s/topic/%s", *burrowURL, c, cg, t))
+	bresp, err := http.Get(fmt.Sprintf("%s/v2/kafka/%s/consumer/%s/topic/%s", e.url, c, cg, t))
 	if err != nil {
 		errors.Wrap(err, "request failed")
 	}

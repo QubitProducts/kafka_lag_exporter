@@ -1,0 +1,13 @@
+blacklist:
+  - '^(console-consumer-|python-kafka-consumer-).*$'
+
+kafka:
+  local:
+    broker:
+      - kafka:9092
+    zookeeper:
+      quorum:
+        - zookeeper
+      path: '/local'
+      offsets: true
+      topic: '__consumer_offsets'
