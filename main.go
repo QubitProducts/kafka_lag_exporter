@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,6 +20,7 @@ var (
 	listenAddress = flag.String("web.listen-address", ":9106", "Address to listen on for web interface and telemetry.")
 	metricsPath   = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
 	cfgFile       = flag.String("config", "kafka_lag_exporter.yml", "Config file location.")
+	keepAlive     = time.Minute * 30
 )
 
 func main() {
@@ -73,7 +75,8 @@ func NewExporter(cfg *config) *Exporter {
 		config: cfg,
 	}
 	for c, kcfg := range cfg.Kafka {
-		kexp, err := NewKafkaExporter(c, &kcfg)
+		cfg := kcfg
+		kexp, err := NewKafkaExporter(c, &cfg)
 		if err != nil {
 			glog.Infof("%+v", err)
 			continue
@@ -102,9 +105,9 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	wg := sync.WaitGroup{}
 	for _, ke := range e.kafkaExps {
 		wg.Add(1)
-		go func(e *KafkaExporter) {
+		go func(ke *KafkaExporter) {
 			defer wg.Done()
-			e.Collect(ch)
+			ke.Collect(ch)
 		}(ke)
 	}
 	wg.Wait()

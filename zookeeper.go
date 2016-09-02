@@ -11,8 +11,10 @@
 package main
 
 import (
+	"net"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,7 +33,15 @@ type ZookeeperExporter struct {
 }
 
 func NewZookeeperExporter(cluster string, desc *prometheus.Desc, cfg *zkConfig) (*ZookeeperExporter, error) {
-	zkconn, _, err := zk.Connect(cfg.Quorum, cfg.Timeout)
+	dialer := func(network, address string, timeout time.Duration) (net.Conn, error) {
+		conn, err := net.DialTimeout(network, address, timeout)
+		if tconn, ok := conn.(*net.TCPConn); conn != nil && ok {
+			tconn.SetKeepAlive(true)
+			tconn.SetKeepAlivePeriod(keepAlive)
+		}
+		return conn, err
+	}
+	zkconn, _, err := zk.ConnectWithDialer(cfg.Quorum, cfg.Timeout, dialer)
 	if err != nil {
 		return nil, err
 	}
@@ -58,10 +68,10 @@ func (zkClient *ZookeeperExporter) Collect(ch chan<- prometheus.Metric) {
 	wg := sync.WaitGroup{}
 	for g := range zkClient.zkGroupList {
 		wg.Add(1)
-		go func() {
+		go func(g string) {
 			defer wg.Done()
 			zkClient.collectOffsetsForConsumerGroup(ch, g)
-		}()
+		}(g)
 	}
 	wg.Wait()
 }
@@ -73,7 +83,7 @@ func (zkClient *ZookeeperExporter) refreshConsumerGroups() {
 	consumerGroups, _, err := zkClient.conn.Children(zkClient.cfg.Path + "/consumers")
 	if err != nil {
 		// Can't read the consumers path. Bail for now
-		glog.Errorf("Cannot get consumer group list for cluster %s: %s", zkClient.cluster, err)
+		glog.Errorf("Cannot get consumer group list for cluster %s: %s %s", zkClient.cluster, zkClient.cfg.Path+"/consumers", err)
 		return
 	}
 
@@ -108,10 +118,10 @@ func (zkClient *ZookeeperExporter) collectOffsetsForConsumerGroup(ch chan<- prom
 		wg := sync.WaitGroup{}
 		for _, topic := range topics {
 			wg.Add(1)
-			go func() {
+			go func(t string) {
 				defer wg.Done()
-				zkClient.getOffsetsForTopic(ch, consumerGroup, topic)
-			}()
+				zkClient.getOffsetsForTopic(ch, consumerGroup, t)
+			}(topic)
 		}
 		wg.Wait()
 	case err == zk.ErrNoNode:
@@ -132,10 +142,10 @@ func (zkClient *ZookeeperExporter) getOffsetsForTopic(ch chan<- prometheus.Metri
 	wg := sync.WaitGroup{}
 	for _, partition := range partitions {
 		wg.Add(1)
-		go func() {
+		go func(p string) {
 			defer wg.Done()
-			zkClient.getOffsetForPartition(ch, consumerGroup, topic, partition)
-		}()
+			zkClient.getOffsetForPartition(ch, consumerGroup, topic, p)
+		}(partition)
 	}
 	wg.Wait()
 }

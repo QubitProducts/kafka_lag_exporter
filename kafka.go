@@ -54,6 +54,8 @@ func NewKafkaExporter(cluster string, cfg *kafkaConfig) (*KafkaExporter, error) 
 	clientConfig := sarama.NewConfig()
 	clientConfig.ClientID = cfg.ClientID
 
+	clientConfig.Net.KeepAlive = keepAlive
+
 	//clientConfig.Net.TLS.Enable = profile.TLS
 	//clientConfig.Net.TLS.Config = &tls.Config{}
 	//clientConfig.Net.TLS.Config.InsecureSkipVerify = profile.TLSNoVerify
