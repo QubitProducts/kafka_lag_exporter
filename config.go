@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io"
+	"time"
 
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -12,15 +13,19 @@ type zkConfig struct {
 	Quorum  []string
 	Path    string
 	Offsets bool
-	Topic   string
+	Timeout time.Duration
+}
+
+type kafkaConfig struct {
+	ClientID  string
+	Brokers   []string
+	Topic     string
+	Zookeeper zkConfig
 }
 
 type config struct {
 	Blacklist []string
-	Kafka     map[string]struct {
-		Broker    []string
-		Zookeeper zkConfig
-	}
+	Kafka     map[string]kafkaConfig
 }
 
 func readConfig(r io.Reader) (*config, error) {
