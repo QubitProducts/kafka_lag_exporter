@@ -173,9 +173,25 @@ func (client *KafkaExporter) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (client *KafkaExporter) Collect(ch chan<- prometheus.Metric) {
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := client.collectPartitionOffsets(ch)
+		if err != nil {
+			glog.Errorf("%+v", errors.Wrap(err, "failed collecting partition offsets"))
+		}
+	}()
+
 	if client.zkExp != nil {
-		client.zkExp.Collect(ch)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			client.zkExp.Collect(ch)
+		}()
 	}
+	wg.Wait()
 }
 
 // This function performs massively parallel OffsetRequests, which is better than Sarama's internal implementation,

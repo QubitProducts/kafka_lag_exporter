@@ -1,13 +1,45 @@
-blacklist:
-  - '^(console-consumer-|python-kafka-consumer-).*$'
-
 kafka:
-  local:
-    broker:
-      - kafka:9092
+  awskafka8:
+    clientId: "kafka-lag-exporter"
+    topic: '__consumer_offsets'
+    brokers:
+      - n5.awskafka8.qutics.com:9092
+      - n6.awskafka8.qutics.com:9092
+      - n7.awskafka8.qutics.com:9092
+      - n8.awskafka8.qutics.com:9092
+      - n9.awskafka8.qutics.com:9092
     zookeeper:
       quorum:
-        - zookeeper
-      path: '/local'
+        - n1.zookeeper.production.qutics.com:2181
+        - n2.zookeeper.production.qutics.com:2181
+        - n3.zookeeper.production.qutics.com:2181
+      path: '/awskafka8'
       offsets: true
-      topic: '__consumer_offsets'
+      timeout: 10s
+  bolt:
+    topic: '__consumer_offsets'
+    brokers:
+    - bottle00.prd.ams.slt.quborg.com:9092
+    - bottle01.prd.ams.slt.quborg.com:9092
+    zookeeper:
+      quorum:
+      - zk00.acheron.prd.ams.slt.a.quborg.com:2181
+      - zk01.acheron.prd.ams.slt.a.quborg.com:2181
+      - zk02.acheron.prd.ams.slt.a.quborg.com:2181
+      path: '/brokers'
+      offsets: true
+      timeout: 10s
+  yogurt:
+    topic: '__consumer_offsets'
+    brokers:
+    - donut00.prd.ldn.slt.quborg.com:9092
+    - donut01.prd.ldn.slt.quborg.com:9092
+    zookeeper:
+      quorum:
+      - zk01.caramel.prd.ldn.slt.a.quborg.com:2181
+      - zk00.caramel.prd.ldn.slt.a.quborg.com:2181
+      - zk02.caramel.prd.ldn.slt.a.quborg.com:2181
+      path: '/brokers'
+      offsets: true
+      timeout: 10s
+

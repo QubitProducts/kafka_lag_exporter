@@ -55,10 +55,15 @@ func (zkClient *ZookeeperExporter) Collect(ch chan<- prometheus.Metric) {
 	zkClient.zkGroupLock.RLock()
 	defer zkClient.zkGroupLock.RUnlock()
 
+	wg := sync.WaitGroup{}
 	for g := range zkClient.zkGroupList {
-		//go zkClient.collectOffsetsForConsumerGroup(ch, g)
-		zkClient.collectOffsetsForConsumerGroup(ch, g)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			zkClient.collectOffsetsForConsumerGroup(ch, g)
+		}()
 	}
+	wg.Wait()
 }
 
 func (zkClient *ZookeeperExporter) refreshConsumerGroups() {
@@ -100,11 +105,15 @@ func (zkClient *ZookeeperExporter) collectOffsetsForConsumerGroup(ch chan<- prom
 	topics, _, err := zkClient.conn.Children(zkClient.cfg.Path + "/consumers/" + consumerGroup + "/offsets")
 	switch {
 	case err == nil:
-		// Spawn a goroutine for each topic. This provides parallelism for multi-topic consumers
+		wg := sync.WaitGroup{}
 		for _, topic := range topics {
-			//go zkClient.getOffsetsForTopic(ch, consumerGroup, topic)
-			zkClient.getOffsetsForTopic(ch, consumerGroup, topic)
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				zkClient.getOffsetsForTopic(ch, consumerGroup, topic)
+			}()
 		}
+		wg.Wait()
 	case err == zk.ErrNoNode:
 		// If the node doesn't exist, it may be because the group is using Kafka-committed offsets. Skip it
 		glog.Infof("Skip checking ZK offsets for group %s in cluster %s as the offsets path doesn't exist", consumerGroup, zkClient.cluster)
@@ -120,11 +129,15 @@ func (zkClient *ZookeeperExporter) getOffsetsForTopic(ch chan<- prometheus.Metri
 		return
 	}
 
-	// Spawn a goroutine for each partition
+	wg := sync.WaitGroup{}
 	for _, partition := range partitions {
-		zkClient.getOffsetForPartition(ch, consumerGroup, topic, partition)
-		//go zkClient.getOffsetForPartition(ch, consumerGroup, topic, partition)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			zkClient.getOffsetForPartition(ch, consumerGroup, topic, partition)
+		}()
 	}
+	wg.Wait()
 }
 
 func (zkClient *ZookeeperExporter) getOffsetForPartition(ch chan<- prometheus.Metric, consumerGroup string, topic string, partition string) {

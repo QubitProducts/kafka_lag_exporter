@@ -99,7 +99,13 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.Lock()
 	defer e.Unlock()
 
+	wg := sync.WaitGroup{}
 	for _, ke := range e.kafkaExps {
-		ke.Collect(ch)
+		wg.Add(1)
+		go func(e *KafkaExporter) {
+			defer wg.Done()
+			e.Collect(ch)
+		}(ke)
 	}
+	wg.Wait()
 }
