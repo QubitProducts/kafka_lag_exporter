@@ -1,0 +1,7 @@
+# Rate of messageges appearing on a topic
+task:kafka_topic_offset_messages:rate1m = rate(kafka_topic_offset_messages[1m])
+
+# Rate of messageges consumption
+task:kafka_consumer_offset_messages:rate1m = rate(kafka_consumer_offset_messages[1m])
+
+task:kafka_consumer_lag_messages:clamp_min0 = clamp_min(kafka_topic_offset_messages - ignoring(consumer) group_right kafka_consumer_offset_messages,0)
