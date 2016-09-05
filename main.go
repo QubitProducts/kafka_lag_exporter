@@ -21,6 +21,8 @@ var (
 	metricsPath   = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
 	cfgFile       = flag.String("config", "kafka_lag_exporter.yml", "Config file location.")
 	keepAlive     = time.Minute * 30
+
+	defaultTimeout = time.Second * 30
 )
 
 func main() {

@@ -14,17 +14,19 @@ type zkConfig struct {
 	Quorum  []string
 	Path    string
 	Offsets bool
-	Timeout time.Duration
+	Timeout *time.Duration
 }
 
 type kafkaConfig struct {
-	ClientID  string
+	ClientID  string `yaml:"client-id"`
 	Brokers   []string
 	Topic     string
 	Zookeeper zkConfig
 }
 
 type config struct {
+	ClientID string `yaml:"client-id"`
+
 	GroupWhitelist []string
 	gwhitelistRe   []*regexp.Regexp
 	GroupBlacklist []string

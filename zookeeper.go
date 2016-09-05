@@ -41,7 +41,11 @@ func NewZookeeperExporter(cluster string, desc *prometheus.Desc, cfg *zkConfig) 
 		}
 		return conn, err
 	}
-	zkconn, _, err := zk.ConnectWithDialer(cfg.Quorum, cfg.Timeout, dialer)
+	to := defaultTimeout
+	if cfg.Timeout != nil {
+		to = *cfg.Timeout
+	}
+	zkconn, _, err := zk.ConnectWithDialer(cfg.Quorum, to, dialer)
 	if err != nil {
 		return nil, err
 	}
