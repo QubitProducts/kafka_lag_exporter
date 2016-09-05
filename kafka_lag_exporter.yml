@@ -3,13 +3,13 @@ blacklist:
 
 kafka:
   local:
-    clientID: "kafka-lag-exporter"
+    clientid: "kafka-lag-exporter"
     topic: '__consumer_offsets'
-    broker:
+    brokers:
       - kafka:9092
     zookeeper:
       quorum:
-        - zookeeper
+        - zookeeper:2181
       path: '/local'
-      offsets: true
+      offsets: false
       timeout: 10s

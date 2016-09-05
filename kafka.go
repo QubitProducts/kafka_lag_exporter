@@ -24,6 +24,26 @@ import (
 	"github.com/prometheus/common/log"
 )
 
+type p struct {
+	sync.Mutex
+	ps map[string]*t
+}
+
+type t struct {
+	sync.Mutex
+	cgs map[string]*cg
+}
+
+type cg struct {
+	sync.Mutex
+	offset float64
+}
+
+type BrokerTopicRequest struct {
+	Result chan int
+	Topic  string
+}
+
 type KafkaExporter struct {
 	cluster            string
 	client             sarama.Client
@@ -42,11 +62,6 @@ type KafkaExporter struct {
 	topicMap     map[string]int
 
 	zkExp *ZookeeperExporter
-}
-
-type BrokerTopicRequest struct {
-	Result chan int
-	Topic  string
 }
 
 func NewKafkaExporter(cluster string, cfg *kafkaConfig) (*KafkaExporter, error) {
