@@ -65,7 +65,7 @@
             "current": false,
             "max": false,
             "min": false,
-            "show": true,
+            "show": false,
             "total": false,
             "values": false
           },
@@ -88,7 +88,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "task:kafka_topic_offset_messages:rate1m{instance='$instance',topic='$topic'}",
+              "expr": "task:kafka_topic_offset_messages:rate1m{instance='$instance',cluster='$cluster',topic='$topic'}",
               "intervalFactor": 2,
               "legendFormat": "{{partition}}",
               "metric": "task:kafka_topic_offset_messages:rate1m",
@@ -96,7 +96,7 @@
               "step": 4
             },
             {
-              "expr": "sum(task:kafka_topic_offset_messages:rate1m{instance='$instance',topic='$topic'})",
+              "expr": "sum(task:kafka_topic_offset_messages:rate1m{instance='$instance',cluster='$cluster',topic='$topic'})",
               "intervalFactor": 2,
               "legendFormat": "Total",
               "metric": "task:kafka_topic_offset_messages:rate1m",
@@ -179,7 +179,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(task:kafka_consumer_offset_messages:rate1m{instance='$instance',topic='$topic'}) by (consumer)",
+              "expr": "sum(task:kafka_consumer_offset_messages:rate1m{instance='$instance',cluster='$cluster',topic='$topic'}) by (consumer)",
               "intervalFactor": 2,
               "legendFormat": "{{consumer}}",
               "metric": "task:kafka_consumer_offset_messages:rate1m",
@@ -190,6 +190,89 @@
           "timeFrom": null,
           "timeShift": null,
           "title": "Consumption rates",
+          "tooltip": {
+            "msResolution": true,
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "show": true
+          },
+          "yaxes": [
+            {
+              "format": "ops",
+              "label": "",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_MESOS_PROMETHEUS}",
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 4,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "Total",
+              "stack": false
+            }
+          ],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "min(task:kafka_consumer_lag_messages:clamp_min0{instance='$instance',cluster='$cluster',topic='$topic'}) without (consumer)",
+              "intervalFactor": 2,
+              "legendFormat": "{{partition}}",
+              "metric": "task:kafka_consumer_lag_messages:clamp_min0",
+              "refId": "A",
+              "step": 4
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Min Partition Lags",
           "tooltip": {
             "msResolution": true,
             "shared": true,
@@ -262,7 +345,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(task:kafka_consumer_lag_messages:clamp_min0{instance='$instance',topic='$topic'}) without (partition)",
+              "expr": "sum(task:kafka_consumer_lag_messages:clamp_min0{instance='$instance',cluster='$cluster',topic='$topic'}) without (partition)",
               "intervalFactor": 2,
               "legendFormat": "{{consumer}}",
               "metric": "task:kafka_consumer_lag_messages:clamp_min0",
@@ -273,89 +356,6 @@
           "timeFrom": null,
           "timeShift": null,
           "title": "Consumer Lags",
-          "tooltip": {
-            "msResolution": true,
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "show": true
-          },
-          "yaxes": [
-            {
-              "format": "ops",
-              "label": "",
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": "${DS_MESOS_PROMETHEUS}",
-          "editable": true,
-          "error": false,
-          "fill": 0,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 4,
-          "isNew": true,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [
-            {
-              "alias": "Total",
-              "stack": false
-            }
-          ],
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "min(task:kafka_consumer_lag_messages:clamp_min0{instance='$instance',topic='$topic'}) without (consumer)",
-              "intervalFactor": 2,
-              "legendFormat": "{{partition}}",
-              "metric": "task:kafka_consumer_lag_messages:clamp_min0",
-              "refId": "A",
-              "step": 4
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Min Partition Lags",
           "tooltip": {
             "msResolution": true,
             "shared": true,
@@ -424,8 +424,7 @@
       {
         "current": {
           "text": "Mesos Prometheus",
-          "value": "Mesos Prometheus",
-          "selected": true
+          "value": "Mesos Prometheus"
         },
         "datasource": null,
         "hide": 0,
@@ -517,7 +516,7 @@
   },
   "refresh": false,
   "schemaVersion": 12,
-  "version": 10,
+  "version": 15,
   "links": [],
   "gnetId": null
 }
