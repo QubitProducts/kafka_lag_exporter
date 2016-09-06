@@ -10,6 +10,8 @@ The following features currently work:
 - Collect zookeeper based kafka consumer group offsets per topic and partition
 - Collect kafka topic offsets per partition
 
+An example rules file and grafana dashboard are included
+
 Not working yet:
 
 - Consumer groups from kafka
