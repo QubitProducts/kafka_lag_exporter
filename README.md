@@ -7,13 +7,13 @@ It builds on code from Burrow (https://github.com/linkedin/Burrow).
 
 The following features currently work:
 
-- Collect kafka topic offsets per partition
 - Collect zookeeper based kafka consumer group offsets per topic and partition
+- Collect kafka topic offsets per partition
 
 Not working yet:
 
+- Consumer groups from kafka
+- Consumer groups from storm
 - black/white list of topics and gorups
 - TLS support
-- Consumer groups from kafka
-- Consumer gorups from storm
 - Defaults for config values read form yaml
