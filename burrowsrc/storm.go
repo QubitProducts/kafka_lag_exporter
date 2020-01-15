@@ -13,18 +13,19 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	log "github.com/cihub/seelog"
-	"github.com/linkedin/Burrow/protocol"
-	"github.com/samuel/go-zookeeper/zk"
 	"math/rand"
 	"regexp"
 	"strconv"
 	"sync"
 	"time"
+
+	log "github.com/cihub/seelog"
+	"github.com/linkedin/Burrow/core/protocol"
+	"github.com/samuel/go-zookeeper/zk"
 )
 
 type StormClient struct {
-	app                *ApplicationContext
+	app                *protocol.ApplicationContext
 	cluster            string
 	conn               *zk.Conn
 	stormRefreshTicker *time.Ticker
@@ -50,7 +51,7 @@ type SpoutState struct {
 	Topic     string
 }
 
-func NewStormClient(app *ApplicationContext, cluster string) (*StormClient, error) {
+func NewStormClient(app *protocol.ApplicationContext, cluster string) (*StormClient, error) {
 	// here we share the timeout w/ global zk
 	zkconn, _, err := zk.Connect(app.Config.Storm[cluster].Zookeepers, time.Duration(app.Config.Zookeeper.Timeout)*time.Second)
 	if err != nil {

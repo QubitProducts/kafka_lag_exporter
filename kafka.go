@@ -21,7 +21,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/log"
 )
 
 type p struct {
@@ -338,7 +337,7 @@ func (client *KafkaExporter) processConsumerOffsetsMessage(msg *sarama.ConsumerM
 			return
 		}
 	case 2:
-		log.Debugf("Discarding group metadata message with key version 2")
+		// glog.Infof("Discarding group metadata message with key version 2")
 		return
 	default:
 		glog.Infof("Failed to decode %s:%v offset %v: keyver %v", msg.Topic, msg.Partition, msg.Offset, keyver)
